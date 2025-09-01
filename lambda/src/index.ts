@@ -1,5 +1,6 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult, Context } from 'aws-lambda';
 import { SimpleSentimentAgent } from './agents/SimpleSentimentAgent';
+import { getAgents, getRecentTrades, getPerformanceData, getCompetitionStats, handleCors } from './api/handlers';
 
 export interface LambdaResponse {
   statusCode: number;
@@ -94,6 +95,43 @@ export async function apiHandler(event: APIGatewayProxyEvent, context: Context):
           timestamp: new Date().toISOString(),
           service: 'AI Investment Agents API'
         })
+      };
+    }
+
+    // Frontend API endpoints
+    if (path === '/api/agents' && method === 'GET') {
+      const result = await getAgents(event);
+      return {
+        statusCode: result.statusCode,
+        headers,
+        body: result.body
+      };
+    }
+
+    if (path === '/api/trades' && method === 'GET') {
+      const result = await getRecentTrades(event);
+      return {
+        statusCode: result.statusCode,
+        headers,
+        body: result.body
+      };
+    }
+
+    if (path === '/api/performance' && method === 'GET') {
+      const result = await getPerformanceData(event);
+      return {
+        statusCode: result.statusCode,
+        headers,
+        body: result.body
+      };
+    }
+
+    if (path === '/api/stats' && method === 'GET') {
+      const result = await getCompetitionStats(event);
+      return {
+        statusCode: result.statusCode,
+        headers,
+        body: result.body
       };
     }
 

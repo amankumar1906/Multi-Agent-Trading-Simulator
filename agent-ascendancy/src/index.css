@@ -1,0 +1,170 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* AI Trading Platform Design System - Dark Theme with Trading Aesthetics */
+
+@layer base {
+  :root {
+    /* Dark Trading Theme Base */
+    --background: 210 25% 8%;
+    --foreground: 210 10% 95%;
+
+    --card: 210 25% 10%;
+    --card-foreground: 210 10% 95%;
+
+    --popover: 210 25% 10%;
+    --popover-foreground: 210 10% 95%;
+
+    /* Trading Colors */
+    --primary: 142 82% 52%; /* Bright trading green */
+    --primary-foreground: 210 25% 8%;
+
+    --secondary: 210 20% 15%;
+    --secondary-foreground: 210 10% 90%;
+
+    --muted: 210 20% 12%;
+    --muted-foreground: 210 10% 60%;
+
+    --accent: 210 20% 15%;
+    --accent-foreground: 210 10% 95%;
+
+    /* Trading Specific Colors */
+    --profit: 142 82% 52%; /* Bright green for profits */
+    --loss: 0 84% 60%; /* Bright red for losses */
+    --warning: 45 93% 58%; /* Yellow for warnings */
+    --info: 217 92% 60%; /* Blue for info */
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 10% 95%;
+
+    --border: 210 20% 20%;
+    --input: 210 20% 15%;
+    --ring: 142 82% 52%;
+
+    --radius: 0.75rem;
+
+    /* Chart & Graph Colors */
+    --chart-1: 142 82% 52%; /* Primary green */
+    --chart-2: 217 92% 60%; /* Blue */
+    --chart-3: 271 91% 65%; /* Purple */
+    --chart-4: 45 93% 58%; /* Yellow */
+    --chart-5: 0 84% 60%; /* Red */
+    --chart-6: 180 82% 52%; /* Cyan */
+
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary) / 0.8));
+    --gradient-profit: linear-gradient(135deg, hsl(var(--profit)), hsl(var(--profit) / 0.6));
+    --gradient-loss: linear-gradient(135deg, hsl(var(--loss)), hsl(var(--loss) / 0.6));
+    --gradient-dark: linear-gradient(135deg, hsl(var(--background)), hsl(var(--card)));
+    --gradient-hero: linear-gradient(135deg, hsl(210 25% 8%), hsl(210 30% 12%), hsl(210 25% 8%));
+
+    /* Glows & Effects */
+    --glow-primary: 0 0 20px hsl(var(--primary) / 0.3);
+    --glow-profit: 0 0 20px hsl(var(--profit) / 0.3);
+    --glow-loss: 0 0 20px hsl(var(--loss) / 0.3);
+    --shadow-trading: 0 8px 32px hsl(var(--background) / 0.8);
+
+    /* Animation Timings */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-fast: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    background: var(--gradient-hero);
+    min-height: 100vh;
+  }
+
+  /* Trading UI Patterns */
+  .profit {
+    @apply text-[hsl(var(--profit))];
+  }
+
+  .loss {
+    @apply text-[hsl(var(--loss))];
+  }
+
+  .glow-profit {
+    box-shadow: var(--glow-profit);
+  }
+
+  .glow-loss {
+    box-shadow: var(--glow-loss);
+  }
+
+  .glow-primary {
+    box-shadow: var(--glow-primary);
+  }
+
+  /* Number animations */
+  .animate-counter {
+    animation: countUp 1.5s ease-out forwards;
+  }
+
+  @keyframes countUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Pulse animation for live data */
+  .pulse-trading {
+    animation: pulse-trading 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  @keyframes pulse-trading {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.8; }
+  }
+
+  /* Floating animation for hero elements */
+  .float {
+    animation: float 3s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+  }
+
+  /* Gradient text effect */
+  .gradient-text {
+    background: var(--gradient-primary);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Scrollbar styling */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-muted/20;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-muted/40 rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-muted/60;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}

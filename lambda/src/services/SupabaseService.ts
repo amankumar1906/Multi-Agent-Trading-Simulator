@@ -4,15 +4,15 @@ import { DatabaseAgent, DatabaseTrade, DatabasePerformance } from '../types';
 export class SupabaseService {
   private client: SupabaseClient;
 
-  constructor() {
-    const supabaseUrl = process.env.SUPABASE_URL!;
-    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY! || process.env.SUPABASE_ANON_KEY!;
+  constructor(supabaseUrl?: string, supabaseKey?: string) {
+    const url = supabaseUrl || process.env.SUPABASE_URL!;
+    const key = supabaseKey || process.env.SUPABASE_SERVICE_ROLE_KEY! || process.env.SUPABASE_ANON_KEY!;
     
-    if (!supabaseUrl || !supabaseKey) {
+    if (!url || !key) {
       throw new Error('Missing Supabase configuration');
     }
 
-    this.client = createClient(supabaseUrl, supabaseKey);
+    this.client = createClient(url, key);
   }
 
   async getAgent(agentId: string): Promise<DatabaseAgent | null> {
@@ -98,7 +98,7 @@ export class SupabaseService {
     }
   }
 
-  async getRecentTrades(agentId: string, limit: number = 10): Promise<DatabaseTrade[]> {
+  async getRecentTradesOld(agentId: string, limit: number = 10): Promise<DatabaseTrade[]> {
     const { data, error } = await this.client
       .from('trades')
       .select('*')
@@ -123,7 +123,7 @@ export class SupabaseService {
     }));
   }
 
-  async getPerformanceHistory(agentId: string, days: number = 30): Promise<DatabasePerformance[]> {
+  async getPerformanceHistoryOld(agentId: string, days: number = 30): Promise<DatabasePerformance[]> {
     const { data, error } = await this.client
       .from('daily_performance')
       .select('*')
@@ -166,5 +166,90 @@ export class SupabaseService {
       createdAt: agent.created_at,
       updatedAt: agent.updated_at
     }));
+  }
+
+  // New methods for API handlers
+  async getAgents(filter: any = {}): Promise<any[]> {
+    const { data, error } = await this.client
+      .from('agents')
+      .select('*')
+      .match(filter);
+
+    if (error) {
+      throw new Error(`Failed to fetch agents: ${error.message}`);
+    }
+
+    return data;
+  }
+
+  async getTradesByAgent(agentId: string): Promise<any[]> {
+    const { data, error } = await this.client
+      .from('trades')
+      .select('*')
+      .eq('agent_id', agentId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      throw new Error(`Failed to fetch trades: ${error.message}`);
+    }
+
+    return data;
+  }
+
+  async getPortfolioByAgent(agentId: string): Promise<any[]> {
+    const { data, error } = await this.client
+      .from('portfolio')
+      .select('*')
+      .eq('agent_id', agentId);
+
+    if (error) {
+      throw new Error(`Failed to fetch portfolio: ${error.message}`);
+    }
+
+    return data;
+  }
+
+  async getLatestPerformance(agentId: string): Promise<any> {
+    const { data, error } = await this.client
+      .from('daily_performance')
+      .select('*')
+      .eq('agent_id', agentId)
+      .order('date', { ascending: false })
+      .limit(1)
+      .single();
+
+    if (error && error.code !== 'PGRST116') {
+      throw new Error(`Failed to fetch performance: ${error.message}`);
+    }
+
+    return data;
+  }
+
+  async getRecentTrades(limit: number = 50): Promise<any[]> {
+    const { data, error } = await this.client
+      .from('trades')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(limit);
+
+    if (error) {
+      throw new Error(`Failed to fetch recent trades: ${error.message}`);
+    }
+
+    return data;
+  }
+
+  async getPerformanceHistory(days: number = 30): Promise<any[]> {
+    const { data, error } = await this.client
+      .from('daily_performance')
+      .select('*')
+      .gte('date', new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString().split('T')[0])
+      .order('date', { ascending: true });
+
+    if (error) {
+      throw new Error(`Failed to fetch performance history: ${error.message}`);
+    }
+
+    return data;
   }
 }

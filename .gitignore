@@ -1,8 +1,6 @@
-# Architecture and Technical Documentation
-ARCHITECTURE.md
-TECH.md
+# Temporary files and build artifacts
 
-# Environment Variables
+# Environment Variables (IMPORTANT - DO NOT COMMIT API KEYS!)
 .env
 .env.local
 .env.development.local
@@ -81,3 +79,15 @@ jspm_packages/
 
 # Serverless directories
 .serverless
+
+# Lambda deployment artifacts
+lambda/temp-deploy-fixed.zip
+lambda/dist/
+response.json
+ai-investment-agent.zip
+
+# Database files
+database/
+
+# Claude Code configuration
+.claude/

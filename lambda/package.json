@@ -1,0 +1,31 @@
+{
+  "name": "investment-agents-lambda",
+  "version": "1.0.0",
+  "description": "AWS Lambda functions for AI trading agents",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc",
+    "deploy": "zip -r function.zip . -x '*.ts' 'tsconfig.json' 'node_modules/.cache/*'",
+    "test": "node -e \"console.log('Lambda function ready')\""
+  },
+  "dependencies": {
+    "@google/generative-ai": "^0.2.0",
+    "@langchain/langgraph": "^0.0.34",
+    "@supabase/supabase-js": "^2.39.0",
+    "axios": "^1.6.0",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.130",
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  },
+  "keywords": [
+    "aws-lambda",
+    "ai",
+    "trading",
+    "agents"
+  ],
+  "author": "",
+  "license": "MIT"
+}

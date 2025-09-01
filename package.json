@@ -1,0 +1,36 @@
+{
+  "name": "ai-investment-agents",
+  "version": "1.0.0",
+  "description": "AI trading agents competition platform",
+  "main": "index.js",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "lambda:build": "cd lambda && npm run build",
+    "lambda:deploy": "cd lambda && npm run deploy"
+  },
+  "dependencies": {
+    "next": "^14.0.0",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0",
+    "@supabase/supabase-js": "^2.39.0",
+    "recharts": "^2.8.0",
+    "lucide-react": "^0.300.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/react": "^18.0.0",
+    "@types/react-dom": "^18.0.0",
+    "eslint": "^8.0.0",
+    "eslint-config-next": "^14.0.0",
+    "typescript": "^5.0.0",
+    "tailwindcss": "^3.3.0",
+    "autoprefixer": "^10.4.16",
+    "postcss": "^8.4.32"
+  },
+  "keywords": ["ai", "trading", "agents", "machine-learning", "finance"],
+  "author": "",
+  "license": "MIT"
+}

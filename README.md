@@ -17,9 +17,9 @@ Leverages **Machine Learning** to predict earnings impact on stock prices
 - **Strategy**: "Trade around earnings announcements using AI predictions"
 
 ### **3. News Impact AI Agent**
-Employs **Real-time NLP** to process breaking financial news
+Employs **Daily NLP Analysis** to process financial news from the past 24 hours
 - **AI Tech**: Entity extraction and impact scoring using AI models
-- **Strategy**: "Be first to react to market-moving news with AI speed"
+- **Strategy**: "Analyze all daily news and trade on the most impactful stories"
 
 ### **4. Trend Following AI Agent** 
 Uses **AI Pattern Detection** to identify momentum in stock prices

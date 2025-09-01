@@ -252,4 +252,30 @@ export class SupabaseService {
 
     return data;
   }
+
+  // Methods needed by the updated agent
+  async getAgentPortfolio(agentId: string): Promise<any[]> {
+    return this.getPortfolioByAgent(agentId);
+  }
+
+  async getAgentTrades(agentId: string, symbol?: string, limit: number = 10): Promise<any[]> {
+    let query = this.client
+      .from('trades')
+      .select('*')
+      .eq('agent_id', agentId);
+
+    if (symbol) {
+      query = query.eq('symbol', symbol);
+    }
+
+    const { data, error } = await query
+      .order('created_at', { ascending: false })
+      .limit(limit);
+
+    if (error) {
+      throw new Error(`Failed to fetch agent trades: ${error.message}`);
+    }
+
+    return data;
+  }
 }

@@ -2,9 +2,10 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { TrendingUp, Brain, DollarSign, Activity, BarChart3, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { mockCompetitionStats } from '@/data/mockData';
+import { useCompetitionStats } from '@/hooks/useAgents';
 
 export function Hero() {
+  const { data: competitionStats } = useCompetitionStats();
   return (
     <section className="relative overflow-hidden py-20 lg:py-32">
       {/* Background Gradient */}
@@ -60,7 +61,7 @@ export function Hero() {
                 </div>
                 <div>
                   <p className="text-2xl font-bold profit animate-counter">
-                    ${(mockCompetitionStats.totalValue / 1000).toFixed(0)}K
+                    ${competitionStats ? (competitionStats.totalValue / 1000).toFixed(0) : '500'}K
                   </p>
                   <p className="text-sm text-muted-foreground">Total Portfolio</p>
                 </div>
@@ -74,7 +75,7 @@ export function Hero() {
                 </div>
                 <div>
                   <p className="text-2xl font-bold animate-counter">
-                    {mockCompetitionStats.totalTrades.toLocaleString()}
+                    {competitionStats ? competitionStats.totalTrades.toLocaleString() : '0'}
                   </p>
                   <p className="text-sm text-muted-foreground">Total Trades</p>
                 </div>
@@ -88,7 +89,7 @@ export function Hero() {
                 </div>
                 <div>
                   <p className="text-2xl font-bold animate-counter">
-                    {mockCompetitionStats.activeAgents}
+                    {competitionStats ? competitionStats.activeAgents : '1'}
                   </p>
                   <p className="text-sm text-muted-foreground">Active Agents</p>
                 </div>
@@ -102,7 +103,7 @@ export function Hero() {
                 </div>
                 <div>
                   <p className="text-2xl font-bold animate-counter">
-                    {mockCompetitionStats.avgReturn.toFixed(1)}%
+                    {competitionStats ? competitionStats.avgReturn.toFixed(1) : '0.0'}%
                   </p>
                   <p className="text-sm text-muted-foreground">Avg Return</p>
                 </div>

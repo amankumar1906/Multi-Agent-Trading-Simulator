@@ -5,53 +5,50 @@ export class ApiService {
   // Get all agents with their current performance
   static async getAgents(): Promise<Agent[]> {
     try {
-      console.log('API: Getting agents...')
-
       const { data: agents, error } = await supabase
         .from('agents')
         .select('*')
-        .eq('is_active', true)
 
       if (error) throw error
 
       // For each agent, get their latest performance, trades, and positions
       const agentsWithData = await Promise.all(
         agents.map(async (dbAgent: any) => {
-          const [trades, portfolio, performance] = await Promise.all([
-            this.getAgentTrades(dbAgent.id),
-            this.getAgentPositions(dbAgent.id),
-            this.getLatestPerformance(dbAgent.id)
-          ])
+          try {
+            const [trades, portfolio, performance] = await Promise.all([
+              ApiService.getAgentTrades(dbAgent.id).catch(e => { return []; }),
+              ApiService.getAgentPositions(dbAgent.id).catch(e => { return []; }),
+              ApiService.getLatestPerformance(dbAgent.id).catch(e => { return null; })
+            ])
 
           const lastTrade = trades.length > 0 ? trades[0] : null
-          const totalPortfolioValue = performance?.portfolio_value || dbAgent.current_value || 100
-          const totalReturn = totalPortfolioValue - 100
-          const totalReturnPercentage = (totalReturn / 100) * 100
+          const currentValue = performance?.portfolio_value || dbAgent.current_value || 100
+          const totalReturn = dbAgent.total_return || 0
+          const totalReturnPercentage = (totalReturn * 100)
 
-          return {
-            id: dbAgent.id,
-            name: dbAgent.name,
-            strategy: dbAgent.strategy,
-            description: this.getAgentDescription(dbAgent.id),
-            currentValue: totalPortfolioValue,
-            totalReturn: totalReturn,
-            totalReturnPercentage: totalReturnPercentage,
-            totalTrades: trades.length,
-            winRate: this.calculateWinRate(trades),
-            positions: portfolio,
-            cashBalance: dbAgent.cash_balance || 100,
-            riskLevel: dbAgent.risk_level as 'Low' | 'Medium' | 'High',
-            isActive: dbAgent.is_active,
-            avatar: this.getAgentAvatar(dbAgent.id),
-            color: this.getAgentColor(dbAgent.id),
-            lastTrade: lastTrade
+            return {
+              id: dbAgent.id,
+              name: dbAgent.name,
+              strategy: dbAgent.strategy,
+              description: ApiService.getAgentDescription(dbAgent.id),
+              currentValue: currentValue,
+              totalReturn: totalReturn,
+              totalReturnPercentage: totalReturnPercentage,
+              totalTrades: dbAgent.total_trades || 0,
+              winRate: (dbAgent.win_rate || 0) * 100,
+              positions: portfolio,
+              avatar: ApiService.getAgentAvatar(dbAgent.id),
+              color: ApiService.getAgentColor(dbAgent.id),
+              lastTrade: lastTrade
+            }
+          } catch (error) {
+            throw error
           }
         })
       )
 
       return agentsWithData
     } catch (error) {
-      console.error('Error fetching agents:', error)
       throw error
     }
   }
@@ -59,8 +56,6 @@ export class ApiService {
   // Get recent trades across all agents
   static async getRecentTrades(limit: number = 50): Promise<Trade[]> {
     try {
-      console.log(`API: Getting ${limit} recent trades...`)
-
       const { data: trades, error } = await supabase
         .from('trades')
         .select(`
@@ -77,21 +72,19 @@ export class ApiService {
         agentId: dbTrade.agent_id,
         agentName: dbTrade.agents?.name || 'Unknown Agent',
         symbol: dbTrade.symbol,
-        companyName: this.getCompanyName(dbTrade.symbol),
+        companyName: ApiService.getCompanyName(dbTrade.symbol),
         action: dbTrade.action as 'BUY' | 'SELL' | 'HOLD',
         quantity: dbTrade.quantity,
         price: dbTrade.price,
         totalValue: dbTrade.quantity * dbTrade.price,
         timestamp: dbTrade.created_at,
         reasoning: dbTrade.reasoning,
-        sentimentScore: dbTrade.sentiment_score,
-        confidence: dbTrade.confidence,
+        confidence: dbTrade.confidence || 0.5,
         sector: 'Technology' // You can enhance this with a symbol-to-sector mapping
       }))
 
       return mappedTrades
     } catch (error) {
-      console.error('Error fetching recent trades:', error)
       throw error
     }
   }
@@ -99,8 +92,6 @@ export class ApiService {
   // Get performance data for charts
   static async getPerformanceData(days: number = 30): Promise<PerformanceData[]> {
     try {
-      console.log(`API: Getting performance data for ${days} days...`)
-
       const { data: performance, error } = await supabase
         .from('daily_performance')
         .select('*')
@@ -115,7 +106,6 @@ export class ApiService {
         agentId: perf.agent_id
       }))
     } catch (error) {
-      console.error('Error fetching performance data:', error)
       throw error
     }
   }
@@ -123,13 +113,11 @@ export class ApiService {
   // Get competition statistics
   static async getCompetitionStats(): Promise<CompetitionStats> {
     try {
-      console.log('API: Getting competition stats...')
-
-      const agents = await this.getAgents()
+      const agents = await ApiService.getAgents()
       
       const totalValue = agents.reduce((sum, agent) => sum + agent.currentValue, 0)
       const totalTrades = agents.reduce((sum, agent) => sum + agent.totalTrades, 0)
-      const activeAgents = agents.filter(agent => agent.isActive).length
+      const activeAgents = agents.length
       const topPerformer = agents.sort((a, b) => b.totalReturnPercentage - a.totalReturnPercentage)[0]?.name || 'N/A'
       const worstPerformer = agents.sort((a, b) => a.totalReturnPercentage - b.totalReturnPercentage)[0]?.name || 'N/A'
       const avgReturn = agents.reduce((sum, agent) => sum + agent.totalReturnPercentage, 0) / agents.length
@@ -144,7 +132,6 @@ export class ApiService {
         totalVolume: 0 // You can calculate this from trades if needed
       }
     } catch (error) {
-      console.error('Error fetching competition stats:', error)
       throw error
     }
   }
@@ -164,15 +151,14 @@ export class ApiService {
       agentId: trade.agent_id,
       agentName: '', // Will be filled by parent
       symbol: trade.symbol,
-      companyName: this.getCompanyName(trade.symbol),
+      companyName: ApiService.getCompanyName(trade.symbol),
       action: trade.action,
       quantity: trade.quantity,
       price: trade.price,
       totalValue: trade.quantity * trade.price,
       timestamp: trade.created_at,
       reasoning: trade.reasoning,
-      sentimentScore: trade.sentiment_score,
-      confidence: trade.confidence,
+      confidence: trade.confidence || 0.5,
       sector: 'Technology'
     }))
   }
@@ -187,17 +173,17 @@ export class ApiService {
     if (error) return []
 
     return portfolio.map((position: any) => {
-      const currentPrice = this.getCurrentPrice(position.symbol)
+      const currentPrice = ApiService.getCurrentPrice(position.symbol)
       const marketValue = position.quantity * currentPrice
-      const unrealizedPnL = marketValue - (position.quantity * position.average_price)
-      const unrealizedPnLPercentage = ((unrealizedPnL) / (position.quantity * position.average_price)) * 100
+      const unrealizedPnL = marketValue - (position.quantity * position.average_cost)
+      const unrealizedPnLPercentage = ((unrealizedPnL) / (position.quantity * position.average_cost)) * 100
 
       return {
         id: position.id,
         symbol: position.symbol,
-        companyName: this.getCompanyName(position.symbol),
+        companyName: ApiService.getCompanyName(position.symbol),
         quantity: position.quantity,
-        avgPrice: position.average_price,
+        avgPrice: position.average_cost,
         currentPrice: currentPrice,
         marketValue: marketValue,
         unrealizedPnL: unrealizedPnL,

@@ -66,15 +66,10 @@ const Agents = () => {
                   </div>
                 </div>
                 <div className="flex flex-col items-end space-y-2">
-                  <Badge variant={agent.riskLevel === 'Low' ? 'secondary' : agent.riskLevel === 'Medium' ? 'default' : 'destructive'}>
-                    {agent.riskLevel} Risk
-                  </Badge>
-                  {agent.isActive && (
-                    <div className="flex items-center space-x-1 text-sm text-profit">
-                      <div className="w-2 h-2 bg-profit rounded-full animate-pulse"></div>
-                      <span>Active</span>
-                    </div>
-                  )}
+                  <div className="flex items-center space-x-1 text-sm text-profit">
+                    <div className="w-2 h-2 bg-profit rounded-full animate-pulse"></div>
+                    <span>Active</span>
+                  </div>
                 </div>
               </div>
 

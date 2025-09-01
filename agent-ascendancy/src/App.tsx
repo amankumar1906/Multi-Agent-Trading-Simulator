@@ -8,10 +8,18 @@ import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
 import Agents from "./pages/Agents";
 import Live from "./pages/Live";
-import Analytics from "./pages/Analytics";
 import NotFound from "./pages/NotFound";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
+      refetchInterval: false,
+      refetchIntervalInBackground: false
+    }
+  }
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -26,7 +34,6 @@ const App = () => (
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/agents" element={<Agents />} />
             <Route path="/live" element={<Live />} />
-            <Route path="/analytics" element={<Analytics />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </div>

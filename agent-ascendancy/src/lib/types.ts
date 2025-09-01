@@ -11,9 +11,6 @@ export interface Agent {
   totalTrades: number;
   winRate: number;
   positions: Position[];
-  cashBalance: number;
-  riskLevel: 'Low' | 'Medium' | 'High';
-  isActive: boolean;
   avatar: string;
   color: string;
   lastTrade?: Trade;

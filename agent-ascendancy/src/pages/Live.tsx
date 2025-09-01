@@ -37,9 +37,9 @@ const Live = () => {
         </Card>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 gap-8">
         {/* Live Trading Feed */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="space-y-6">
           <Card className="p-6">
             <h2 className="text-xl font-semibold mb-6 flex items-center space-x-2">
               <Activity className="h-5 w-5 pulse-trading" />
@@ -142,83 +142,6 @@ const Live = () => {
                   <p className="text-sm text-muted-foreground mt-1">Trading activity will appear here</p>
                 </div>
               )}
-            </div>
-          </Card>
-        </div>
-
-        {/* Market Data & Sentiment */}
-        <div className="space-y-6">
-          {/* Market Overview */}
-          <Card className="p-6">
-            <h3 className="text-lg font-semibold mb-4">Market Overview</h3>
-            <div className="space-y-4">
-              {mockMarketData.map((stock) => (
-                <div key={stock.symbol} className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium">{stock.symbol}</p>
-                    <p className="text-sm text-muted-foreground">{stock.companyName}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-bold">${stock.currentPrice.toFixed(2)}</p>
-                    <p className={`text-sm ${stock.changePercentage >= 0 ? 'profit' : 'loss'}`}>
-                      {stock.changePercentage >= 0 ? '+' : ''}{stock.changePercentage.toFixed(2)}%
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </Card>
-
-          {/* Sentiment Heatmap */}
-          <Card className="p-6">
-            <h3 className="text-lg font-semibold mb-4">Sentiment Analysis</h3>
-            <div className="space-y-4">
-              {mockSentimentData.map((sentiment) => (
-                <div key={sentiment.symbol} className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium">{sentiment.symbol}</span>
-                    <Badge variant={
-                      sentiment.score >= 70 ? 'default' : 
-                      sentiment.score >= 50 ? 'secondary' : 'destructive'
-                    }>
-                      {sentiment.score}% {sentiment.trend === 'up' ? '↗' : sentiment.trend === 'down' ? '↘' : '→'}
-                    </Badge>
-                  </div>
-                  <div className="w-full bg-muted rounded-full h-2">
-                    <div 
-                      className={`h-2 rounded-full transition-all duration-300 ${
-                        sentiment.score >= 70 ? 'bg-profit' : 
-                        sentiment.score >= 50 ? 'bg-warning' : 'bg-loss'
-                      }`}
-                      style={{ width: `${sentiment.score}%` }}
-                    ></div>
-                  </div>
-                  <div className="flex justify-between text-xs text-muted-foreground">
-                    <span>Reddit: {sentiment.sources.reddit}%</span>
-                    <span>StockTwits: {sentiment.sources.stocktwits}%</span>
-                    <span>News: {sentiment.sources.news}%</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </Card>
-
-          {/* Quick Stats */}
-          <Card className="p-6">
-            <h3 className="text-lg font-semibold mb-4">Trading Volume</h3>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Total Volume Today</span>
-                <span className="font-bold">$2.4M</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Active Trades</span>
-                <span className="font-bold text-profit">12</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Avg Trade Size</span>
-                <span className="font-bold">$1,847</span>
-              </div>
             </div>
           </Card>
         </div>

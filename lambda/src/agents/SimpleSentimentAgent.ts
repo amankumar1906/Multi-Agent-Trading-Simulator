@@ -4,17 +4,25 @@ import { StocktwitsService } from '../services/StocktwitsService';
 import { GeminiService } from '../services/GeminiService';
 import { YahooFinanceService } from '../services/YahooFinanceService';
 import { SupabaseService } from '../services/SupabaseService';
+import { ComprehensiveSentimentService } from '../services/ComprehensiveSentimentService';
 
 export class SimpleSentimentAgent {
   private agentId = '550e8400-e29b-41d4-a716-446655440001';
   private agentName = 'Social Sentiment AI Agent';
   private strategy = 'sentiment';
   
+  // Fixed watchlist - top 20 most liquid stocks for consistent tracking
+  private readonly FIXED_WATCHLIST = [
+    'AAPL', 'MSFT', 'GOOGL', 'AMZN', 'NVDA', 'META', 'TSLA', 'AVGO',
+    'WMT', 'LLY', 'JPM', 'UNH', 'XOM', 'V', 'PG', 'MA', 'JNJ', 'HD', 'CVX', 'ABBV'
+  ];
+  
   private redditService: RedditService;
   private stocktwitsService: StocktwitsService;
   private geminiService: GeminiService;
   private yahooFinance: YahooFinanceService;
   private supabase: SupabaseService;
+  private comprehensiveSentiment: ComprehensiveSentimentService;
 
   constructor() {
     this.redditService = new RedditService();
@@ -22,6 +30,7 @@ export class SimpleSentimentAgent {
     this.geminiService = new GeminiService();
     this.yahooFinance = new YahooFinanceService();
     this.supabase = new SupabaseService();
+    this.comprehensiveSentiment = new ComprehensiveSentimentService();
   }
 
   async executeDaily(): Promise<{
@@ -96,11 +105,14 @@ export class SimpleSentimentAgent {
       agent = await this.supabase.getAgent(this.agentId);
     }
 
+    // Load current portfolio from database
+    const currentPortfolio = await this.loadPortfolioFromDatabase();
+    
     return {
       agentId: this.agentId,
       currentDate: new Date().toISOString().split('T')[0],
       availableCash: agent?.currentValue || 100.00,
-      portfolio: {}, // TODO: Load from database
+      portfolio: currentPortfolio,
       processingStatus: 'initialized',
       targetSymbols: [],
       redditPosts: [],
@@ -112,36 +124,17 @@ export class SimpleSentimentAgent {
 
   private async collectData(state: SentimentAgentState): Promise<SentimentAgentState> {
     try {
-      // Get trending symbols or use defaults
-      let targetSymbols: string[];
-      
-      try {
-        const rawSymbols = await this.stocktwitsService.getTrendingSymbols();
-        // Filter out invalid symbols and clean .X suffixes
-        targetSymbols = rawSymbols
-          .map(symbol => symbol.replace(/\.X$/, '')) // Remove .X suffix
-          .filter(symbol => /^[A-Z]{1,5}$/.test(symbol)) // Only valid stock symbols
-          .filter(symbol => !['BTC', 'ETH', 'DOGE'].includes(symbol)); // Remove crypto
-        
-        if (targetSymbols.length === 0) {
-          throw new Error('No valid symbols found');
-        }
-      } catch (error) {
-        console.warn('Using default symbols:', error);
-        targetSymbols = ['AAPL', 'TSLA', 'MSFT', 'GOOGL', 'AMZN', 'META', 'NVDA'];
-      }
+      // Use fixed watchlist for consistent tracking
+      const targetSymbols = [...this.FIXED_WATCHLIST];
+      console.log(`Analyzing fixed watchlist: ${targetSymbols.join(', ')}`);
 
-      // Limit to top 8 symbols
-      targetSymbols = targetSymbols.slice(0, 8);
-      console.log(`Analyzing symbols: ${targetSymbols.join(', ')}`);
+      // Collect Reddit posts for all watchlist symbols
+      const redditPosts = await this.redditService.getStockMentions(targetSymbols, 50);
+      console.log(`Collected ${redditPosts.length} Reddit posts from fixed watchlist`);
 
-      // Collect Reddit posts
-      const redditPosts = await this.redditService.getStockMentions(targetSymbols, 25);
-      console.log(`Collected ${redditPosts.length} Reddit posts`);
-
-      // Collect StockTwits posts
-      const stocktwitsPosts = await this.stocktwitsService.getMultipleSymbols(targetSymbols, 10);
-      console.log(`Collected ${stocktwitsPosts.length} StockTwits posts`);
+      // Collect StockTwits posts for all watchlist symbols
+      const stocktwitsPosts = await this.stocktwitsService.getMultipleSymbols(targetSymbols, 20);
+      console.log(`Collected ${stocktwitsPosts.length} StockTwits posts from fixed watchlist`);
 
       return {
         ...state,
@@ -155,7 +148,7 @@ export class SimpleSentimentAgent {
       console.error('Data collection failed:', error);
       return {
         ...state,
-        targetSymbols: ['AAPL', 'TSLA'], // Fallback
+        targetSymbols: this.FIXED_WATCHLIST.slice(0, 5), // Use first 5 as fallback
         redditPosts: [],
         stocktwitsPosts: [],
         processingStatus: 'data_collection_failed'
@@ -164,27 +157,25 @@ export class SimpleSentimentAgent {
   }
 
   private async analyzeSentiment(state: SentimentAgentState): Promise<SentimentAgentState> {
-    if (state.redditPosts.length === 0 && state.stocktwitsPosts.length === 0) {
-      console.warn('No data to analyze');
-      return {
-        ...state,
-        sentimentScores: {},
-        processingStatus: 'no_data_to_analyze'
-      };
-    }
-
+    console.log('🧠 Starting comprehensive sentiment analysis for all 20 stocks...');
+    
     try {
-      const sentimentAnalysis = await this.geminiService.analyzeSentiment(
-        state.redditPosts,
-        state.stocktwitsPosts
+      // Use comprehensive sentiment service to ensure ALL 20 stocks get sentiment scores
+      const comprehensiveResults = await this.comprehensiveSentiment.getComprehensiveSentiment(
+        this.FIXED_WATCHLIST
       );
 
       const sentimentScores: Record<string, number> = {};
       
-      for (const analysis of sentimentAnalysis) {
-        sentimentScores[analysis.symbol] = analysis.sentimentScore;
-        console.log(`${analysis.symbol}: ${(analysis.sentimentScore * 100).toFixed(1)}% sentiment`);
+      for (const result of comprehensiveResults) {
+        sentimentScores[result.symbol] = result.finalSentiment;
+        console.log(`${result.symbol}: ${(result.finalSentiment * 100).toFixed(1)}% (${result.sources.length} sources, confidence: ${result.confidence.toFixed(2)})`);
       }
+
+      // Log coverage statistics
+      const totalStocks = this.FIXED_WATCHLIST.length;
+      const coveredStocks = Object.keys(sentimentScores).length;
+      console.log(`📊 Sentiment Coverage: ${coveredStocks}/${totalStocks} stocks (${((coveredStocks/totalStocks)*100).toFixed(1)}%)`);
 
       return {
         ...state,
@@ -193,11 +184,18 @@ export class SimpleSentimentAgent {
       };
 
     } catch (error) {
-      console.error('Sentiment analysis failed:', error);
+      console.error('Comprehensive sentiment analysis failed:', error);
+      
+      // Fallback: provide neutral sentiment for all stocks
+      const fallbackScores: Record<string, number> = {};
+      for (const symbol of this.FIXED_WATCHLIST) {
+        fallbackScores[symbol] = 0.5; // Neutral sentiment
+      }
+      
       return {
         ...state,
-        sentimentScores: {},
-        processingStatus: 'sentiment_analysis_failed'
+        sentimentScores: fallbackScores,
+        processingStatus: 'sentiment_analysis_failed_using_fallback'
       };
     }
   }
@@ -205,64 +203,17 @@ export class SimpleSentimentAgent {
   private async makeDecisions(state: SentimentAgentState): Promise<SentimentAgentState> {
     const tradeDecisions: TradeDecision[] = [];
 
-    if (Object.keys(state.sentimentScores).length === 0) {
-      console.warn('No sentiment data for decisions');
-      return {
-        ...state,
-        tradeDecisions,
-        processingStatus: 'no_decisions_made'
-      };
-    }
-
     try {
-      const symbols = Object.keys(state.sentimentScores);
-      const stockPrices = await this.yahooFinance.getCurrentPrices(symbols);
+      // Get prices for ALL watchlist symbols (not just those with sentiment)
+      const allPrices = await this.yahooFinance.getCurrentPrices(this.FIXED_WATCHLIST);
+      
+      // Process all watchlist symbols for decisions
+      await this.processWatchlistDecisions(state, tradeDecisions, allPrices);
+      
+      // Review existing positions that might not be in watchlist
+      await this.reviewExistingPositions(state, tradeDecisions, allPrices);
 
-      for (const [symbol, sentiment] of Object.entries(state.sentimentScores)) {
-        const currentPrice = stockPrices[symbol];
-        
-        if (!currentPrice) {
-          console.warn(`No price data for ${symbol}`);
-          continue;
-        }
-
-        let action: 'BUY' | 'SELL' | 'HOLD' = 'HOLD';
-        let reasoning = '';
-        let quantity = 0;
-
-        // Apply 70/30 sentiment rule
-        if (sentiment >= 0.70) {
-          action = 'BUY';
-          const positionValue = state.availableCash * 0.15; // 15% of cash per position
-          quantity = Math.max(1, Math.floor(positionValue / currentPrice)); // At least 1 share
-          reasoning = `Strong positive sentiment (${(sentiment * 100).toFixed(1)}%) - buying ${quantity} shares`;
-          
-        } else if (sentiment <= 0.30) {
-          const currentPosition = state.portfolio[symbol] || 0;
-          if (currentPosition > 0) {
-            action = 'SELL';
-            quantity = currentPosition;
-            reasoning = `Strong negative sentiment (${(sentiment * 100).toFixed(1)}%) - selling all ${quantity} shares`;
-          } else {
-            reasoning = `Strong negative sentiment but no position to sell`;
-          }
-          
-        } else {
-          reasoning = `Neutral sentiment (${(sentiment * 100).toFixed(1)}%) - holding`;
-        }
-
-        tradeDecisions.push({
-          symbol,
-          action,
-          quantity,
-          currentPrice,
-          reasoning,
-          confidence: Math.abs(sentiment - 0.5) * 2,
-          sentimentScore: sentiment
-        });
-
-        console.log(`${symbol}: ${action} ${quantity} @ $${currentPrice} - ${reasoning}`);
-      }
+      console.log(`Generated ${tradeDecisions.length} trade decisions`);
 
       return {
         ...state,
@@ -277,6 +228,140 @@ export class SimpleSentimentAgent {
         tradeDecisions,
         processingStatus: 'decision_making_failed'
       };
+    }
+  }
+
+  private async processWatchlistDecisions(
+    state: SentimentAgentState, 
+    tradeDecisions: TradeDecision[], 
+    allPrices: Record<string, number>
+  ): Promise<void> {
+    for (const symbol of this.FIXED_WATCHLIST) {
+      const currentPrice = allPrices[symbol];
+      const sentiment = state.sentimentScores[symbol];
+      const currentPosition = state.portfolio[symbol] || 0;
+      
+      if (!currentPrice) {
+        console.warn(`No price data for ${symbol}`);
+        continue;
+      }
+
+      let action: 'BUY' | 'SELL' | 'HOLD' = 'HOLD';
+      let reasoning = '';
+      let quantity = 0;
+
+      // Enhanced sentiment-based decisions with better exit logic
+      if (sentiment !== undefined) {
+        // Strong positive sentiment - BUY
+        if (sentiment >= 0.70 && currentPosition < this.getMaxPositionSize(state.availableCash, currentPrice)) {
+          action = 'BUY';
+          const positionValue = state.availableCash * 0.10; // 10% of available cash per position
+          quantity = Math.max(1, Math.floor(positionValue / currentPrice));
+          reasoning = `Strong positive sentiment (${(sentiment * 100).toFixed(1)}%) - buying ${quantity} shares`;
+          
+        // Negative sentiment - SELL if holding  
+        } else if (sentiment <= 0.40 && currentPosition > 0) {
+          action = 'SELL';
+          quantity = currentPosition;
+          reasoning = `Negative sentiment (${(sentiment * 100).toFixed(1)}%) - selling all ${quantity} shares`;
+          
+        // Neutral sentiment but holding - consider partial exit
+        } else if (sentiment >= 0.40 && sentiment <= 0.60 && currentPosition > 0) {
+          // Check if we've been holding this position too long
+          const holdingDays = await this.getDaysHeld(symbol);
+          if (holdingDays > 7) {
+            action = 'SELL';
+            quantity = Math.ceil(currentPosition * 0.5); // Sell 50%
+            reasoning = `Neutral sentiment (${(sentiment * 100).toFixed(1)}%) held ${holdingDays} days - reducing position by 50%`;
+          } else {
+            reasoning = `Neutral sentiment (${(sentiment * 100).toFixed(1)}%) - holding for now (${holdingDays} days)`;
+          }
+        } else {
+          reasoning = sentiment ? `Sentiment ${(sentiment * 100).toFixed(1)}% - no action needed` : `No sentiment data - holding`;
+        }
+      } else {
+        // No sentiment data available
+        if (currentPosition > 0) {
+          const holdingDays = await this.getDaysHeld(symbol);
+          if (holdingDays > 3) {
+            action = 'SELL';
+            quantity = currentPosition;
+            reasoning = `No sentiment data for ${holdingDays} days - selling all ${quantity} shares`;
+          } else {
+            reasoning = `No sentiment data - holding for ${holdingDays} more days`;
+          }
+        }
+      }
+
+      tradeDecisions.push({
+        symbol,
+        action,
+        quantity,
+        currentPrice,
+        reasoning,
+        confidence: sentiment ? Math.abs(sentiment - 0.5) * 2 : 0.3,
+        sentimentScore: sentiment || 0
+      });
+
+      console.log(`${symbol}: ${action} ${quantity} @ $${currentPrice} - ${reasoning}`);
+    }
+  }
+
+  private async reviewExistingPositions(
+    state: SentimentAgentState,
+    tradeDecisions: TradeDecision[], 
+    allPrices: Record<string, number>
+  ): Promise<void> {
+    // Review any positions not in current watchlist
+    for (const [symbol, quantity] of Object.entries(state.portfolio)) {
+      if (quantity > 0 && !this.FIXED_WATCHLIST.includes(symbol)) {
+        const currentPrice = allPrices[symbol] || await this.getSinglePrice(symbol);
+        const holdingDays = await this.getDaysHeld(symbol);
+        
+        if (currentPrice) {
+          // Force sell positions not in watchlist after 1 day
+          tradeDecisions.push({
+            symbol,
+            action: 'SELL',
+            quantity,
+            currentPrice,
+            reasoning: `Position not in watchlist (${holdingDays} days) - liquidating`,
+            confidence: 0.8,
+            sentimentScore: 0
+          });
+        }
+      }
+    }
+  }
+
+  private getMaxPositionSize(availableCash: number, price: number): number {
+    // Max 15% of portfolio in any single position
+    return Math.floor((availableCash * 0.15) / price);
+  }
+
+  private async getDaysHeld(symbol: string): Promise<number> {
+    // Get the most recent BUY trade for this symbol
+    // This is a simplified version - you might want to implement proper tracking
+    try {
+      const trades = await this.supabase.getAgentTrades(this.agentId, symbol, 1);
+      if (trades.length > 0) {
+        const lastTradeDate = new Date(trades[0].date);
+        const today = new Date();
+        const diffTime = Math.abs(today.getTime() - lastTradeDate.getTime());
+        return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      }
+    } catch (error) {
+      console.warn(`Could not get holding days for ${symbol}:`, error);
+    }
+    return 0;
+  }
+
+  private async getSinglePrice(symbol: string): Promise<number | null> {
+    try {
+      const prices = await this.yahooFinance.getCurrentPrices([symbol]);
+      return prices[symbol] || null;
+    } catch {
+      return null;
     }
   }
 
@@ -390,5 +475,24 @@ export class SimpleSentimentAgent {
     }
     
     return totalValue;
+  }
+
+  private async loadPortfolioFromDatabase(): Promise<Record<string, number>> {
+    try {
+      const portfolio = await this.supabase.getAgentPortfolio(this.agentId);
+      const portfolioMap: Record<string, number> = {};
+      
+      for (const position of portfolio) {
+        if (position.quantity > 0) {
+          portfolioMap[position.symbol] = position.quantity;
+        }
+      }
+      
+      console.log(`Loaded portfolio:`, portfolioMap);
+      return portfolioMap;
+    } catch (error) {
+      console.warn('Could not load portfolio from database:', error);
+      return {};
+    }
   }
 }

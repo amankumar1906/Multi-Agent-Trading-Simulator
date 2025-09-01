@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { TrendingUp, Activity, Brain, BarChart3 } from 'lucide-react';
+import { TrendingUp, Activity, Brain } from 'lucide-react';
 
 export function Header() {
   return (
@@ -40,13 +40,6 @@ export function Header() {
           >
             <Activity className="h-4 w-4 pulse-trading" />
             <span>Live</span>
-          </Link>
-          <Link 
-            to="/analytics" 
-            className="transition-colors hover:text-foreground/80 text-foreground/60 flex items-center space-x-1"
-          >
-            <BarChart3 className="h-4 w-4" />
-            <span>Analytics</span>
           </Link>
         </nav>
 

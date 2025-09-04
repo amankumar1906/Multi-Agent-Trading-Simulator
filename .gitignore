@@ -83,6 +83,12 @@ jspm_packages/
 # Lambda deployment artifacts
 lambda/temp-deploy-fixed.zip
 lambda/dist/
+lambda/function.zip
+lambda/deploy.md
+lambda-earnings-agent/dist/
+lambda-earnings-agent/function.zip
+lambda-earnings-agent/deploy.md
+CLAUDE.md
 response.json
 ai-investment-agent.zip
 

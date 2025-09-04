@@ -1,0 +1,25 @@
+{
+  "name": "earnings-momentum-agent",
+  "version": "1.0.0",
+  "description": "AI Earnings Momentum Trading Agent - Analyzes upcoming earnings and IPOs to make trading decisions",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "test": "npm run build && node -e \"console.log('Testing earnings momentum agent...')\""
+  },
+  "dependencies": {
+    "@google/generative-ai": "^0.21.0",
+    "@supabase/supabase-js": "^2.46.1",
+    "axios": "^1.7.7",
+    "aws-lambda": "^1.0.7"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.145",
+    "@types/node": "^22.7.4",
+    "typescript": "^5.6.2"
+  },
+  "keywords": ["ai", "trading", "earnings", "lambda", "aws", "momentum"],
+  "author": "AI Investment System",
+  "license": "MIT"
+}

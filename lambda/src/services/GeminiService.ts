@@ -207,6 +207,21 @@ Be conservative - only give extreme scores (below 0.3 or above 0.7) if sentiment
     }
   }
 
+  async generateText(prompt: string): Promise<string> {
+    try {
+      console.log(`Gemini prompt (first 100 chars): ${prompt.substring(0, 100)}...`);
+      const result = await this.model.generateContent(prompt);
+      const response = await result.response;
+      const text = response.text();
+      console.log(`Gemini response: ${text}`);
+      return text;
+    } catch (error) {
+      console.error('Gemini text generation failed:', error);
+      console.error('Error details:', error instanceof Error ? error.message : error);
+      throw error;
+    }
+  }
+
   async testConnection(): Promise<boolean> {
     try {
       const result = await this.model.generateContent("Hello, respond with 'OK' if you can see this.");

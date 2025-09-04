@@ -12,6 +12,9 @@ export interface SentimentAgentState extends AgentState {
   stocktwitsPosts: StocktwitsPost[];
   sentimentScores: Record<string, number>; // symbol -> sentiment score (0-1)
   tradeDecisions: TradeDecision[];
+  debug?: {
+    aiResponse?: string;
+  };
 }
 
 export interface RedditPost {

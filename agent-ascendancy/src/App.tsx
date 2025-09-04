@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
 import Agents from "./pages/Agents";
 import Live from "./pages/Live";
+import Trades from "./pages/Trades";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -34,6 +35,7 @@ const App = () => (
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/agents" element={<Agents />} />
             <Route path="/live" element={<Live />} />
+            <Route path="/trades" element={<Trades />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </div>

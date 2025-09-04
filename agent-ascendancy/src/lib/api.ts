@@ -1,5 +1,6 @@
 import { supabase } from './supabase'
 import { Agent, Trade, Position, PerformanceData, CompetitionStats } from './types'
+import { calculateTradeProfitLoss, TradeWithPnL } from './tradeUtils'
 
 export class ApiService {
   // Get all agents with their current performance
@@ -53,8 +54,8 @@ export class ApiService {
     }
   }
 
-  // Get recent trades across all agents
-  static async getRecentTrades(limit: number = 50): Promise<Trade[]> {
+  // Get recent trades across all agents with profit/loss calculations
+  static async getRecentTrades(limit: number = 50): Promise<TradeWithPnL[]> {
     try {
       const { data: trades, error } = await supabase
         .from('trades')
@@ -79,11 +80,12 @@ export class ApiService {
         totalValue: dbTrade.quantity * dbTrade.price,
         timestamp: dbTrade.created_at,
         reasoning: dbTrade.reasoning,
-        confidence: dbTrade.confidence || 0.5,
+        confidence: (dbTrade.confidence || 0.5) * 100,
         sector: 'Technology' // You can enhance this with a symbol-to-sector mapping
       }))
 
-      return mappedTrades
+      // Calculate profit/loss for all trades
+      return calculateTradeProfitLoss(mappedTrades)
     } catch (error) {
       throw error
     }

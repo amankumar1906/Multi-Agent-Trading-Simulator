@@ -91,3 +91,10 @@ export interface ChartDataPoint {
   timestamp: string;
   [key: string]: number | string;
 }
+
+export interface TradeWithPnL extends Trade {
+  profitLoss?: number
+  profitLossPercentage?: number
+  buyPrice?: number
+  sellPrice?: number
+}
